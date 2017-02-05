@@ -48,7 +48,8 @@ lazy val akka = project
   .settings(
     libraryDependencies ++=
       jvmDeps(akkaOrg, Version.akka)(
-        "akka-actor"
+        "akka-actor",
+        "akka-agent"
       ) ++
         jvmDeps(akkaOrg, Version.akkaHttp)(
           "akka-http-core"
@@ -69,4 +70,4 @@ lazy val cli = project
     buildInfoPackage := s"${organization.value}.${name.value}"
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(rapture)
+  .dependsOn(rapture, akka)
