@@ -19,8 +19,8 @@ object Cli extends App {
         (entry, response) ← Rapture.replay(Rapture.load(conf.file))
         startMillis = response.startMillis
         endMillis   = response.endMillis
-        duration = endMillis - startMillis
-        request = entry.request
+        duration    = endMillis - startMillis
+        request     = entry.request
       } {
         println(
           Seq(
