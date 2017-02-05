@@ -16,16 +16,12 @@ val raptureOrgNames = Seq(
 lazy val core = crossProject
   .crossType(CrossType.Pure)
   .settings(commonSettings: _*)
-  .jsSettings(
-    libraryDependencies ++= {
-      for {
-        (org, name) ← raptureOrgNames
-      } yield {
-        org %%% name % raptureVersion
-      }
-    }
-  )
-  .jvmSettings(
+
+lazy val coreJvm = core.jvm
+
+lazy val rapture = project
+  .settings(commonSettings: _*)
+  .settings(
     libraryDependencies ++= {
       for {
         (org, name) ← raptureOrgNames
@@ -34,8 +30,7 @@ lazy val core = crossProject
       }
     }
   )
-
-lazy val coreJvm = core.jvm
+  .dependsOn(coreJvm)
 
 lazy val cli = project
   .settings(commonSettings: _*)
@@ -50,4 +45,4 @@ lazy val cli = project
     buildInfoPackage := s"${organization.value}.${name.value}"
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(coreJvm)
+  .dependsOn(rapture)

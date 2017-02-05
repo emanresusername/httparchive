@@ -1,7 +1,8 @@
 package my.will.be.done.httparchive.cli
 
-import my.will.be.done.httparchive.Replay
-import scala.concurrent.duration.SECONDS
+import my.will.be.done.httparchive.Rapture
+import scala.concurrent.duration.MILLISECONDS
+import java.time.Instant.EPOCH
 
 object Cli extends App {
   OptionParser.parse(args, Conf()) match {
@@ -15,16 +16,19 @@ object Cli extends App {
           "duration"
         ).mkString("\t"))
       for {
-        replay ← Replay(conf.file)
-        duration = replay.duration
+        (entry, response) ← Rapture.replay(Rapture.load(conf.file))
+        startMillis = response.startMillis
+        endMillis   = response.endMillis
+        duration = endMillis - startMillis
+        request = entry.request
       } {
         println(
           Seq(
-            java.time.Instant.now,
-            replay.response.status,
-            replay.method,
-            replay.query.toString,
-            duration.toUnit(SECONDS)
+            EPOCH.plusMillis(startMillis),
+            response.response.status,
+            request.method,
+            request.url,
+            s"$duration ms"
           ).mkString("\t"))
       }
     case None ⇒
