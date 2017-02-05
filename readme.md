@@ -1,3 +1,3 @@
-```sh
-sbt "cli/run -f /path/to/httparchive.har"
-```
+# [Core](/core/readme.md)
+
+# [Cli](/cli/readme.md)
