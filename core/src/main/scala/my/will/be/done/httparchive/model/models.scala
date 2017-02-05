@@ -41,19 +41,6 @@ case class PageTimings(
     comment: Option[String]
 )
 
-case class Entry(
-    pageref: Option[String],
-    startedDateTime: String,
-    time: Long,
-    request: Request,
-    response: Response,
-    cache: Cache,
-    timings: Timings,
-    serverIPAddress: Option[String],
-    connection: Option[String],
-    comment: Option[String]
-)
-
 case class Request(
     method: String,
     url: String,
