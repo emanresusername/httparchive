@@ -4,7 +4,11 @@ package my.will.be.done.httparchive.model
 
 case class HttpArchive(
     log: Log
-)
+) {
+  def entry(index: Int): Entry = {
+    log.entry(index)
+  }
+}
 
 case class Log(
     version: String,
@@ -13,7 +17,11 @@ case class Log(
     pages: Option[Seq[Page]],
     entries: Seq[Entry],
     comment: Option[String]
-)
+) {
+  def entry(index: Int): Entry = {
+    entries(index)
+  }
+}
 
 case class Creator(
     name: String,
