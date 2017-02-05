@@ -8,6 +8,10 @@ case class HttpArchive(
   def entry(index: Int): Entry = {
     log.entry(index)
   }
+
+  def entrysWithIndex: Seq[(Entry, Int)] = {
+    log.entrysWithIndex
+  }
 }
 
 case class Log(
@@ -20,6 +24,10 @@ case class Log(
 ) {
   def entry(index: Int): Entry = {
     entries(index)
+  }
+
+  def entrysWithIndex: Seq[(Entry, Int)] = {
+    entries.zipWithIndex
   }
 }
 
