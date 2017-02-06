@@ -18,8 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object Rapture {
   implicit val raptureRequestResponse: RequestResponse[HttpResponse] = {
-    entry ⇒
-      val request = entry.request
+    request ⇒
       val headers = request.headers.map { header ⇒
         header.name → header.value
       }.toMap
@@ -47,12 +46,11 @@ object Rapture {
   }
 
   def replay(httpArchive: HttpArchive)
-    : Iterator[(Entry, TimedResponse[HttpResponse])] = {
+    : Iterator[(Int, TimedResponse[HttpResponse])] = {
     for {
-      futureEntryResponse ← TimedResponse(httpArchive)
+      futureIndexResponse ← TimedResponse(httpArchive)
     } yield {
-      // TODO: async using entry.startDateTime
-      Await.result(futureEntryResponse, Duration.Inf)
+      Await.result(futureIndexResponse, Duration.Inf)
     }
   }
 

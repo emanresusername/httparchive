@@ -23,8 +23,7 @@ class EntryActor extends Actor with ActorLogging {
   /**
     * TODO: configurable conditions for failure scenarios
     */
-  implicit val akkaRequestResponse: RequestResponse[HttpResponse] = { entry ⇒
-    val request = entry.request
+  implicit val akkaRequestResponse: RequestResponse[HttpResponse] = { request ⇒
     val headerOrErrors = EntryActor.httpHeaders(request).collect {
       case ParsingResult.Ok(header, errors) ⇒
         for {
@@ -60,12 +59,12 @@ class EntryActor extends Actor with ActorLogging {
   }
 
   def receive = {
-    case Message.Replay(index, entry) ⇒
+    case Message.Replay(index, request) ⇒
       pipe(
         for {
-          response ← TimedResponse(entry)
+          response ← TimedResponse(request)
         } yield {
-          Message.RequestResponse(index, entry.request, response)
+          Message.IndexResponse(index, response)
         }
       ).to(sender)
   }
@@ -112,9 +111,7 @@ object EntryActor {
   }
 
   object Message {
-    case class Replay(index: Int, entry: Entry)
-    case class RequestResponse(index: Int,
-                               request: Request,
-                               response: TimedResponse[HttpResponse])
+    case class Replay(index: Int, request: Request)
+    case class IndexResponse(index: Int, response: TimedResponse[HttpResponse])
   }
 }

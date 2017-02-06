@@ -10,7 +10,6 @@ object Cli extends App {
       val system = ActorSystem("replay-http-archive")
       val cliReplayer =
         system.actorOf(Props(classOf[CliReplayer], conf), "cli")
-      cliReplayer ! Rapture.load(conf.file)
     case None ⇒
   }
 }

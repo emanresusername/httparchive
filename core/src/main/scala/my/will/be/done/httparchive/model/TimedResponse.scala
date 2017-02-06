@@ -10,14 +10,14 @@ case class TimedResponse[R](
 )
 
 object TimedResponse {
-  type RequestResponse[R] = Entry ⇒ Future[R]
+  type RequestResponse[R] = Request ⇒ Future[R]
 
-  def apply[R](entry: Entry)(
+  def apply[R](request: Request)(
       implicit requestResponse: RequestResponse[R],
       executioContext: ExecutionContext): Future[TimedResponse[R]] = {
     val startMillis = currentTimeMillis
     for {
-      response ← requestResponse(entry)
+      response ← requestResponse(request)
     } yield {
       TimedResponse(
         response = response,
@@ -30,11 +30,12 @@ object TimedResponse {
   def apply[R](httpArchive: HttpArchive)(
       implicit requestResponse: RequestResponse[R],
       executioContext: ExecutionContext)
-    : Iterator[Future[(Entry, TimedResponse[R])]] = {
+    : Iterator[Future[(Int, TimedResponse[R])]] = {
     for {
-      entry ← httpArchive.log.entries.toIterator
+      (entry, index) ← httpArchive.entrysWithIndex.toIterator
+      request = entry.request
     } yield {
-      TimedResponse(entry).map(entry → _)
+      TimedResponse(request).map(index → _)
     }
   }
 }

@@ -1,5 +1,6 @@
 package my.will.be.done.httparchive.cli.actor
 
+import my.will.be.done.httparchive.Rapture
 import my.will.be.done.httparchive.cli.Conf
 import my.will.be.done.httparchive.model.{Request, TimedResponse, HttpArchive}
 import java.time.Instant.EPOCH
@@ -12,7 +13,8 @@ import rapture.json.formatters.compact._
 class CliReplayer(conf: Conf) extends Actor with ActorLogging {
   import context.actorOf
 
-  val system = context.system
+  val system      = context.system
+  val httpArchive = Rapture.load(conf.file)
 
   // TODO: akka streams file sink or something
   lazy val printStream = synchronized {
@@ -23,23 +25,33 @@ class CliReplayer(conf: Conf) extends Actor with ActorLogging {
     val startMillis = replay.startMillis
     val endMillis   = replay.endMillis
     val duration    = endMillis - startMillis
+    val index       = replay.index
+    val request     = httpArchive.entry(index).request
 
     printStream.println(
       Seq(
-        replay.index,
+        index,
         EPOCH.plusMillis(startMillis),
         replay.status,
-        replay.method,
-        replay.uri,
+        request.method,
+        request.url,
         duration,
         replay.responseSize,
-        replay.requestSize
+        request.bodySize
       ).mkString(conf.tsvDelimiter)
     )
   }
 
   def jsonPrintln(replay: Replay): Unit = {
     printStream.println(Json.format(Json(replay)))
+  }
+
+  override def preStart(): Unit = {
+    if (conf.serial) {
+      actorOf(Props[RaptureReplayer], "rapture-replayer") ! httpArchive
+    } else {
+      actorOf(Props(classOf[AkkaReplayer], httpArchive, self), "akka-replayer")
+    }
   }
 
   def receive = {
@@ -52,13 +64,6 @@ class CliReplayer(conf: Conf) extends Actor with ActorLogging {
         tsvPrintln _
       }
       printReplay(replay)
-    case httpArchive: HttpArchive ⇒
-      if (conf.serial) {
-        actorOf(Props[RaptureReplayer], "rapture-replayer") ! httpArchive
-      } else {
-        actorOf(Props(classOf[AkkaReplayer], httpArchive, self),
-                "akka-replayer")
-      }
     case CliReplayer.Message.ReplayDone ⇒
       log.debug("replay finished, shutting system down")
       system.terminate
@@ -72,27 +77,20 @@ object CliReplayer {
         startMillis: Long,
         endMillis: Long,
         status: Int,
-        method: String,
-        uri: String,
-        responseSize: Option[Long],
-        requestSize: Long
+        responseSize: Option[Long]
     )
 
     object Replay {
       def apply[R](index: Int,
                    status: Int,
                    responseSize: Option[Long],
-                   request: Request,
                    response: TimedResponse[R]): Replay = {
         Replay(
           index = index,
           status = status,
           responseSize = responseSize,
-          uri = request.url,
-          method = request.method,
           startMillis = response.startMillis,
-          endMillis = response.endMillis,
-          requestSize = request.bodySize
+          endMillis = response.endMillis
         )
       }
     }

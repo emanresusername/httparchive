@@ -25,11 +25,12 @@ class AkkaReplayer(httpArchive: HttpArchive, watcher: ActorRef)
     val firstStarted = httpArchive.entry(0).startedInstant
     for {
       (entry, index) ← httpArchive.entrysWithIndex
-      delay = between(firstStarted, entry.startedInstant).toMillis.millis
+      request = entry.request
+      delay   = between(firstStarted, entry.startedInstant).toMillis.millis
     } {
       scheduler.scheduleOnce(delay) {
         val entryActor = context.actorOf(Props[EntryActor], s"entry-$index")
-        entryActor ! EntryActor.Message.Replay(index, entry)
+        entryActor ! EntryActor.Message.Replay(index, request)
         entryActor ! PoisonPill
       }
     }
@@ -38,12 +39,11 @@ class AkkaReplayer(httpArchive: HttpArchive, watcher: ActorRef)
   def receive = {
     case failure: Status.Failure ⇒
       watcher ! failure
-    case EntryActor.Message.RequestResponse(index, request, response) ⇒
+    case EntryActor.Message.IndexResponse(index, response) ⇒
       val httpResponse = response.response
       watcher ! Replay(
         index = index,
         response = response,
-        request = request,
         status = httpResponse.status.intValue,
         responseSize = httpResponse.entity.contentLengthOption
       )

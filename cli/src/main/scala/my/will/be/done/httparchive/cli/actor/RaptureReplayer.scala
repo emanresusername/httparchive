@@ -14,14 +14,12 @@ class RaptureReplayer extends Actor with ActorLogging {
   def receive = {
     case httpArchive: HttpArchive ⇒
       for {
-        ((entry, response), index) ← Rapture.replay(httpArchive).zipWithIndex
-        request         = entry.request
+        (index, response) ← Rapture.replay(httpArchive)
         raptureResponse = response.response
       } {
         sender ! Replay(
           index = index,
           response = response,
-          request = request,
           status = raptureResponse.status,
           responseSize = raptureResponse.headers.collectFirst {
             case (name, List(length))
