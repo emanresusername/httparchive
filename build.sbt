@@ -11,13 +11,21 @@ val Version = new {
   val akkaHttp = "10.0.3"
 }
 
-def jvmDeps(org: String, version: String)(names: String*) = {
+def commonDeps(org: String, version: String)(
+    names: String*): Seq[(String, String, String)] = {
   for {
     name ← names
   } yield {
-    org %% name % version
+    (org, name, version)
   }
 }
+
+val raptureCommonDeps = commonDeps("com.propensive", Version.rapture)(
+  "rapture-json-circe",
+  "rapture-io",
+  "rapture-uri",
+  "rapture-net"
+)
 
 lazy val core = crossProject
   .crossType(CrossType.Pure)
@@ -25,18 +33,27 @@ lazy val core = crossProject
 
 lazy val coreJvm = core.jvm
 
-lazy val rapture = project
+lazy val rapture = crossProject
+  .crossType(CrossType.Pure)
   .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies ++=
-      jvmDeps("com.propensive", Version.rapture)(
-        "rapture-json-circe",
-        "rapture-io",
-        "rapture-uri",
-        "rapture-net"
-      )
+  .jvmSettings(
+    libraryDependencies ++= (
+      raptureCommonDeps
+    ).map {
+      case (a, b, c) ⇒ a %% b % c
+    }
   )
-  .dependsOn(coreJvm)
+  .jsSettings(
+    libraryDependencies ++= (
+      raptureCommonDeps
+    ).map {
+      case (a, b, c) ⇒ a %%% b % c
+    }
+  )
+  .dependsOn(core)
+  .enablePlugins(ScalaJSPlugin)
+
+lazy val raptureJvm = rapture.jvm
 
 val akkaOrg = "com.typesafe.akka"
 val akkaOrgNames = Seq(
@@ -46,14 +63,17 @@ val akkaOrgNames = Seq(
 lazy val akka = project
   .settings(commonSettings: _*)
   .settings(
-    libraryDependencies ++=
-      jvmDeps(akkaOrg, Version.akka)(
+    libraryDependencies ++= (
+      commonDeps(akkaOrg, Version.akka)(
         "akka-actor",
         "akka-agent"
       ) ++
-        jvmDeps(akkaOrg, Version.akkaHttp)(
+        commonDeps(akkaOrg, Version.akkaHttp)(
           "akka-http-core"
         )
+    ).map {
+      case (a, b, c) ⇒ a %% b % c
+    }
   )
   .dependsOn(coreJvm)
 
@@ -70,4 +90,4 @@ lazy val cli = project
     buildInfoPackage := s"${organization.value}.${name.value}"
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(rapture, akka)
+  .dependsOn(raptureJvm, akka)
