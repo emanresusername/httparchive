@@ -9,6 +9,7 @@ val Version = new {
   val rapture  = "2.0.0-M8"
   val akka     = "2.4.16"
   val akkaHttp = "10.0.3"
+  val circe    = "0.7.0"
 }
 
 def commonDeps(org: String, version: String)(
@@ -20,18 +21,46 @@ def commonDeps(org: String, version: String)(
   }
 }
 
+lazy val core = crossProject
+  .crossType(CrossType.Pure)
+  .settings(commonSettings: _*)
+
+lazy val coreJvm = core.jvm
+
+val circeCommonDeps = commonDeps("io.circe", Version.circe)(
+  "circe-parser",
+  "circe-generic",
+  "circe-optics"
+)
+
+lazy val circe = crossProject
+  .crossType(CrossType.Pure)
+  .settings(commonSettings: _*)
+  .jvmSettings(
+    libraryDependencies ++= (
+      circeCommonDeps
+    ).map {
+      case (a, b, c) ⇒ a %% b % c
+    }
+  )
+  .jsSettings(
+    libraryDependencies ++= (
+      circeCommonDeps
+    ).map {
+      case (a, b, c) ⇒ a %%% b % c
+    }
+  )
+  .dependsOn(core)
+  .enablePlugins(ScalaJSPlugin)
+
+lazy val circeJvm = circe.jvm
+
 val raptureCommonDeps = commonDeps("com.propensive", Version.rapture)(
   "rapture-json-circe",
   "rapture-io",
   "rapture-uri",
   "rapture-net"
 )
-
-lazy val core = crossProject
-  .crossType(CrossType.Pure)
-  .settings(commonSettings: _*)
-
-lazy val coreJvm = core.jvm
 
 lazy val rapture = crossProject
   .crossType(CrossType.Pure)
@@ -50,7 +79,7 @@ lazy val rapture = crossProject
       case (a, b, c) ⇒ a %%% b % c
     }
   )
-  .dependsOn(core)
+  .dependsOn(circe)
   .enablePlugins(ScalaJSPlugin)
 
 lazy val raptureJvm = rapture.jvm

@@ -54,16 +54,4 @@ object Rapture {
     }
   }
 
-  def load(json: Json): HttpArchive = {
-    json.as[HttpArchive]
-  }
-
-  def load(string: String): HttpArchive = {
-    load(Json.parse(string))
-  }
-
-  def load(file: File): HttpArchive = {
-    load(Source.fromFile(file).mkString)
-  }
-
 }
