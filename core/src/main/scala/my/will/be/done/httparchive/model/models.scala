@@ -44,12 +44,12 @@ case class Browser(
 )
 
 case class Page(
-    startDateTime: String,
+    startedDateTime: String,
     id: String,
     title: String,
     pageTimings: PageTimings,
     comments: Option[String]
-)
+) extends StartedDateTime
 
 case class PageTimings(
     onContentLoad: Option[Long],
