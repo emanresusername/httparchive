@@ -1,24 +1,10 @@
 package my.will.be.done.httparchive
 
 import my.will.be.done.httparchive.cli.BuildInfo
-import java.io.{File, PrintStream, FileOutputStream}
+import java.io.File
+import my.will.be.done.httparchive.cli.Command._
 
 package object cli {
-  case class Conf(
-      file: File = new File("."),
-      output: Option[File] = None,
-      tsvDelimiter: String = "\t",
-      serial: Boolean = true,
-      jsonline: Boolean = false
-  ) {
-    def outputStream: PrintStream = {
-      output
-        .map(new FileOutputStream(_, true))
-        .map(new PrintStream(_))
-        .getOrElse(System.out)
-    }
-  }
-
   val name: String = {
     Seq(
       BuildInfo.organization.split("\\.").last,
@@ -43,14 +29,34 @@ package object cli {
       .action((x, c) => c.copy(output = Option(x)))
       .text("where to output the replay info, defaults to stdout")
 
-    opt[Unit]('s', "scheduled")
-      .action((_, c) => c.copy(serial = false))
-      .text(
-        "if set the requests will start at the same relative time they started in the source httparchive. if not, they will start immediately after the previous one finishes")
+    cmd(Replay.entryName)
+      .action((x, c) => c.copy(command = Replay))
+      .text("replay the requests in the http archive")
+      .children(
+        opt[Unit]('s', "scheduled")
+          .action((_, c) => c.copy(serial = false))
+          .text(
+            "if set the requests will start at the same relative time they started in the source httparchive. if not, they will start immediately after the previous one finishes"),
+        opt[Unit]('j', "jsonline")
+          .action((_, c) => c.copy(jsonline = true))
+          .text(
+            "if set will output in jsonline format. if not will output for tsv")
+      )
 
-    opt[Unit]('j', "jsonline")
-      .action((_, c) => c.copy(jsonline = true))
-      .text(
-        "if set will output in jsonline format. if not will output for tsv")
+    cmd(Modify.entryName)
+      .action((x, c) ⇒ c.copy(command = Modify))
+      .text("produce a new httpArchive with certain aspects modified")
+      .children(
+        opt[(String, String)]('u', "url")
+          .unbounded()
+          .keyName("find")
+          .valueName("replace")
+          .action((x, c) ⇒
+            c.copy(urlStringReplacements = c.urlStringReplacements :+ x))
+          .text("does a literal string replacement on the request urls changing all instances of `find` to `replace`. Will also change `Host` and `Referer` headers"),
+        opt[Unit]('e', "empty-response")
+          .action((_, c) ⇒ c.copy(emptyResponse = true))
+          .text("empties the response body text, headers and cookies")
+      )
   }
 }

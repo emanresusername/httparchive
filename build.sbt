@@ -112,7 +112,8 @@ lazy val cli = project
     libraryDependencies ++= {
 
       Seq(
-        "com.github.scopt" %% "scopt" % "3.5.0"
+        "com.github.scopt" %% "scopt"      % "3.5.0",
+        "com.beachape"     %% "enumeratum" % "1.5.6"
       )
     },
     buildInfoKeys := Seq[BuildInfoKey](name, version, organization),
