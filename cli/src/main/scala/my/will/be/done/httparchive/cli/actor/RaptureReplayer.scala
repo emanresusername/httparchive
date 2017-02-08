@@ -1,6 +1,6 @@
 package my.will.be.done.httparchive.cli.actor
 
-import my.will.be.done.httparchive.Rapture
+import my.will.be.done.httparchive.rapture
 import akka.actor.{Actor, ActorLogging, PoisonPill}
 import my.will.be.done.httparchive.model.{HttpArchive}
 import scala.concurrent.Future
@@ -9,12 +9,12 @@ import CliReplayer.Message.{Replay, ReplayDone}
 class RaptureReplayer extends Actor with ActorLogging {
   val system = context.system
   import system.dispatcher
-  import Rapture.raptureRequestResponse
+  import rapture.raptureRequestResponse
 
   def receive = {
     case httpArchive: HttpArchive ⇒
       for {
-        (index, response) ← Rapture.replay(httpArchive)
+        (index, response) ← rapture.replay(httpArchive)
         raptureResponse = response.response
       } {
         sender ! Replay(

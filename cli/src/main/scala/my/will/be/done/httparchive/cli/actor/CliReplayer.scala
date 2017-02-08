@@ -1,7 +1,7 @@
 package my.will.be.done.httparchive.cli.actor
 
 import my.will.be.done.httparchive.circe.loadHttpArchive
-import my.will.be.done.httparchive.Rapture
+import my.will.be.done.httparchive.rapture
 import my.will.be.done.httparchive.cli.Conf
 import my.will.be.done.httparchive.model.{Request, TimedResponse, HttpArchive}
 import java.time.Instant

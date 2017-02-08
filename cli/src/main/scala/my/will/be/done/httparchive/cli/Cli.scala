@@ -1,7 +1,7 @@
 package my.will.be.done.httparchive.cli
 
 import my.will.be.done.httparchive.cli.actor._
-import my.will.be.done.httparchive.Rapture
+import my.will.be.done.httparchive.rapture
 import my.will.be.done.httparchive.circe
 import akka.actor.{ActorSystem, Props}
 import my.will.be.done.httparchive.cli.Command._
