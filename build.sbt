@@ -10,6 +10,7 @@ val Version = new {
   val akka     = "2.4.16"
   val akkaHttp = "10.0.3"
   val circe    = "0.7.0"
+  val binding  = "10.0.2"
 }
 
 def commonDeps(org: String, version: String)(
@@ -26,6 +27,7 @@ lazy val core = crossProject
   .settings(commonSettings: _*)
 
 lazy val coreJvm = core.jvm
+lazy val coreJs  = core.js
 
 val circeCommonDeps = commonDeps("io.circe", Version.circe)(
   "circe-parser",
@@ -54,6 +56,7 @@ lazy val circe = crossProject
   .enablePlugins(ScalaJSPlugin)
 
 lazy val circeJvm = circe.jvm
+lazy val circeJs  = circe.js
 
 val raptureCommonDeps = commonDeps("com.propensive", Version.rapture)(
   "rapture-json-circe",
@@ -83,6 +86,21 @@ lazy val rapture = crossProject
   .enablePlugins(ScalaJSPlugin)
 
 lazy val raptureJvm = rapture.jvm
+lazy val raptureJs  = rapture.js
+
+lazy val www = project
+  .settings(commonSettings: _*)
+  .settings(
+    addCompilerPlugin(
+      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    libraryDependencies ++= {
+      Seq(
+        "com.thoughtworks.binding" %%% "dom" % Version.binding
+      )
+    }
+  )
+  .dependsOn(circeJs)
+  .enablePlugins(WorkbenchPlugin)
 
 val akkaOrg = "com.typesafe.akka"
 val akkaOrgNames = Seq(
