@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
 
 val Version = new {
   val rapture  = "2.0.0-M8"
-  val akka     = "2.4.16"
+  val akka     = "2.4.17"
   val akkaHttp = "10.0.3"
   val circe    = "0.7.0"
   val binding  = "10.0.2"
@@ -131,7 +131,7 @@ lazy val cli = project
 
       Seq(
         "com.github.scopt" %% "scopt"      % "3.5.0",
-        "com.beachape"     %% "enumeratum" % "1.5.6"
+        "com.beachape"     %% "enumeratum" % "1.5.7"
       )
     },
     buildInfoKeys := Seq[BuildInfoKey](name, version, organization),
