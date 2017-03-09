@@ -12,7 +12,8 @@ case class Conf(
     jsonline: Boolean = false,
     command: Command = null,
     urlStringReplacements: Seq[(String, String)] = Nil,
-    emptyResponse: Boolean = false
+    emptyResponse: Boolean = false,
+    actors: Int = 1
 ) {
   def outputStream: PrintStream = {
     val overwrite = Command.Modify.equals(command)

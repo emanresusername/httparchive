@@ -40,7 +40,10 @@ package object cli {
         opt[Unit]('j', "jsonline")
           .action((_, c) => c.copy(jsonline = true))
           .text(
-            "if set will output in jsonline format. if not will output for tsv")
+            "if set will output in jsonline format. if not will output for tsv"),
+        opt[Int]('a', "actors")
+          .action((x, c) ⇒ c.copy(actors = x))
+          .text("number times to replay the archive. will replay in separate actors concurrently")
       )
 
     cmd(Modify.entryName)

@@ -1,6 +1,5 @@
 package my.will.be.done.httparchive.cli.actor
 
-import my.will.be.done.httparchive.circe.loadHttpArchive
 import my.will.be.done.httparchive.rapture
 import my.will.be.done.httparchive.cli.Conf
 import my.will.be.done.httparchive.model.{Request, TimedResponse, HttpArchive}
@@ -8,7 +7,6 @@ import java.time.Instant
 import akka.actor.{Actor, ActorLogging, Props, Status, PoisonPill}
 import CliReplayer.Message.Replay
 import CliReplayer.IndexRequestResponse
-import scala.util.Try
 import io.circe.syntax._
 import io.circe.generic.auto._
 import scala.concurrent.duration.{MILLISECONDS, Duration}
@@ -42,25 +40,6 @@ class CliReplayer(conf: Conf) extends Actor with ActorLogging {
     printStream.println(replay.asJson.noSpaces)
   }
 
-  override def preStart(): Unit = {
-    (for {
-      httpArchiveOrError ← Try { loadHttpArchive(conf.file) }.toEither
-      httpArchive        ← httpArchiveOrError
-    } yield {
-      httpArchive
-    }) match {
-      case Left(cause) ⇒
-        log.error(cause, "couldn't load http archive, shutting down")
-        self ! PoisonPill
-      case Right(httpArchive) ⇒
-        self ! httpArchive
-    }
-  }
-
-  override def postStop(): Unit = {
-    system.terminate
-  }
-
   def httpArchiveLoaded(httpArchive: HttpArchive): Receive = {
     if (conf.serial) {
       actorOf(Props[RaptureReplayer], "rapture-replayer") ! httpArchive
@@ -80,7 +59,7 @@ class CliReplayer(conf: Conf) extends Actor with ActorLogging {
         }
         printReplay(IndexRequestResponse(replay = replay, request = request))
       case CliReplayer.Message.ReplayDone ⇒
-        log.debug("replay finished, shutting system down")
+        log.debug("replay finished, taking poison pill")
         context.unbecome
         self ! PoisonPill
     }
