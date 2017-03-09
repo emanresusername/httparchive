@@ -65,28 +65,16 @@ val raptureCommonDeps = commonDeps("com.propensive", Version.rapture)(
   "rapture-net"
 )
 
-lazy val rapture = crossProject
-  .crossType(CrossType.Pure)
+lazy val rapture = project
   .settings(commonSettings: _*)
-  .jvmSettings(
+  .settings(
     libraryDependencies ++= (
       raptureCommonDeps
     ).map {
       case (a, b, c) ⇒ a %% b % c
     }
   )
-  .jsSettings(
-    libraryDependencies ++= (
-      raptureCommonDeps
-    ).map {
-      case (a, b, c) ⇒ a %%% b % c
-    }
-  )
-  .dependsOn(circe)
-  .enablePlugins(ScalaJSPlugin)
-
-lazy val raptureJvm = rapture.jvm
-lazy val raptureJs  = rapture.js
+  .dependsOn(circeJvm)
 
 lazy val www = project
   .settings(commonSettings: _*)
@@ -138,4 +126,4 @@ lazy val cli = project
     buildInfoPackage := s"${organization.value}.${name.value}"
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(raptureJvm, akka)
+  .dependsOn(rapture, akka)

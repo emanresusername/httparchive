@@ -45,10 +45,19 @@ package object rapture {
       }
   }
 
+  def asyncReplay(httpArchive: HttpArchive)
+    : Iterator[Future[(Int, TimedResponse[HttpResponse])]] = {
+    for {
+      futureIndexResponse ← TimedResponse(httpArchive)
+    } yield {
+      futureIndexResponse
+    }
+  }
+
   def replay(httpArchive: HttpArchive)
     : Iterator[(Int, TimedResponse[HttpResponse])] = {
     for {
-      futureIndexResponse ← TimedResponse(httpArchive)
+      futureIndexResponse ← asyncReplay(httpArchive)
     } yield {
       Await.result(futureIndexResponse, Duration.Inf)
     }
