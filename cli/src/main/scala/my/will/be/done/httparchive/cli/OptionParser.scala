@@ -50,6 +50,19 @@ object OptionParser extends scopt.OptionParser[Conf](cliName) {
         .text("does a literal string replacement on the request urls changing all instances of `find` to `replace`. Will also change `Host` and `Referer` headers"),
       opt[Unit]('e', "empty-response")
         .action((_, c) ⇒ c.copy(emptyResponse = true))
-        .text("empties the response body text, headers and cookies")
+        .text("empties the response body text, headers and cookies"),
+      opt[String]('U', "filter-url-regex")
+        .action((x, c) ⇒ c.copy(urlFilterRegex = Option(x.r)))
+        .text("filter to entrys who's request's url matches the regex"),
+      opt[String]('m', "filter-method-regex")
+        .action((x, c) ⇒ c.copy(methodFilterRegex = Option(x.r)))
+        .text("filter to entrys who's request's method matches the regex"),
+      opt[Int]('s', "status-min")
+        .action((x, c) ⇒ c.copy(statusMin = Option(x)))
+        .text(
+          "filter to entrys who's request's status code is greater than or equal to this"),
+      opt[Int]('S', "status-max")
+        .action((x, c) ⇒ c.copy(statusMax = Option(x)))
+        .text("filter to entrys who's request's status code is less than or equal to this")
     )
 }

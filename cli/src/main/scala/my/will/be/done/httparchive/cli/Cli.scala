@@ -8,6 +8,7 @@ import my.will.be.done.httparchive.cli.Command._
 import my.will.be.done.httparchive.circe.loadHttpArchive
 import scala.util.Try
 import scala.concurrent.duration._
+import io.circe.Json
 
 object Cli extends App {
   OptionParser.parse(args, Conf()) match {
@@ -64,19 +65,17 @@ object Cli extends App {
             )
           } {
             conf.outputStream.print(
-              (
-                if (conf.emptyResponse) {
-                  circe.emptyResponseText(
-                    circe.emptyResponseHeaders(
-                      circe.emptyResponseCookies(
-                        modified
-                      )
-                    )
+              Function
+                .chain[Json](
+                  Seq(
+                    circe.filterEntrys(_, conf.filterEntry),
+                    circe.modifyRequestUrls(_, conf.modifyUrl),
+                    circe.modifyRequestHeaders(_, conf.modifyUrlHeaderValue),
+                    conf.modifyResponses
                   )
-                } else {
-                  modified
-                }
-              ).noSpaces)
+                )(httpArchive)
+                .spaces2
+            )
           }
       }
     case None ⇒
