@@ -28,19 +28,23 @@ object Cli extends App {
               log.error(cause, "couldn't load http archive, shutting down")
               system.terminate
             case Right(httpArchive) ⇒
+              val printer = system.actorOf(
+                Props(classOf[Printer], conf, httpArchive),
+                "printer")
               for {
                 index ← 0 until actors
                 actorName = s"cli-$index"
               } {
                 log.info(s"starting actor $actorName")
                 val actor =
-                  system.actorOf(Props(classOf[CliReplayer], conf), actorName)
+                  system.actorOf(Props(classOf[CliReplayer], conf, printer),
+                                 actorName)
                 inbox.watch(actor)
                 actor ! httpArchive
               }
           }
           Stream
-            .continually(inbox.select(1.hour) {
+            .continually(inbox.select(1.day) {
               case Terminated(actor) ⇒
                 log.info("terminated {}", actor)
             })

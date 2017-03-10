@@ -4,70 +4,33 @@ import my.will.be.done.httparchive.rapture
 import my.will.be.done.httparchive.cli.Conf
 import my.will.be.done.httparchive.model.{Request, TimedResponse, HttpArchive}
 import java.time.Instant
-import akka.actor.{Actor, ActorLogging, Props, Status, PoisonPill}
+import akka.actor.{Actor, ActorLogging, Props, Status, PoisonPill, ActorRef}
 import CliReplayer.Message.Replay
 import CliReplayer.IndexRequestResponse
-import io.circe.syntax._
-import io.circe.generic.auto._
 import scala.concurrent.duration.{MILLISECONDS, Duration}
 
-class CliReplayer(conf: Conf) extends Actor with ActorLogging {
+class CliReplayer(conf: Conf, printer: ActorRef)
+    extends Actor
+    with ActorLogging {
   import context.actorOf
 
   val system = context.system
 
-  // TODO: akka streams file sink or something
-  lazy val printStream = synchronized {
-    conf.outputStream
-  }
-
-  def tsvPrintln(replay: IndexRequestResponse): Unit = {
-    printStream.println(
-      Seq(
-        replay.index,
-        replay.startInstant,
-        replay.status,
-        replay.method,
-        replay.uri,
-        replay.duration.toMillis,
-        replay.responseSize,
-        replay.requestSize
-      ).mkString(conf.tsvDelimiter)
-    )
-  }
-
-  def jsonPrintln(replay: IndexRequestResponse): Unit = {
-    printStream.println(replay.asJson.noSpaces)
-  }
-
-  def httpArchiveLoaded(httpArchive: HttpArchive): Receive = {
-    if (conf.serial) {
-      actorOf(Props[RaptureReplayer], "rapture-replayer") ! httpArchive
-    } else {
-      actorOf(Props(classOf[AkkaReplayer], httpArchive, self), "akka-replayer")
-    }
-
-    {
-      case Status.Failure(cause) ⇒
-        log.error(cause, "recieved failure from {}", sender)
-      case replay: CliReplayer.Message.Replay ⇒
-        val request = httpArchive.entry(replay.index).request
-        val printReplay = if (conf.jsonline) {
-          jsonPrintln _
-        } else {
-          tsvPrintln _
-        }
-        printReplay(IndexRequestResponse(replay = replay, request = request))
-      case CliReplayer.Message.ReplayDone ⇒
-        log.debug("replay finished, taking poison pill")
-        context.unbecome
-        self ! PoisonPill
-    }
-  }
-
   def receive = {
     case httpArchive: HttpArchive ⇒
-      context.become(httpArchiveLoaded(httpArchive))
+      if (conf.serial) {
+        actorOf(Props[RaptureReplayer], "rapture-replayer") ! httpArchive
+      } else {
+        actorOf(Props(classOf[AkkaReplayer], httpArchive, self),
+                "akka-replayer")
+      }
+    case Status.Failure(cause) ⇒
+      log.error(cause, "recieved failure from {}", sender)
+    case replay: CliReplayer.Message.Replay ⇒
+      printer ! replay
+    case CliReplayer.Message.ReplayDone ⇒
+      log.debug("replay finished, taking poison pill")
+      self ! PoisonPill
   }
 }
 
